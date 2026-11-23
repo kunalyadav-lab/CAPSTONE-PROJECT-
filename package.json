@@ -1,0 +1,24 @@
+{
+  "name": "tsp-route-optimizer",
+  "version": "1.0.0",
+  "description": "Travelling Salesperson Problem - Optimal and Approximate Route Planning Capstone Project",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test src/tests/tsp.test.js",
+    "benchmark": "node src/cli/runBenchmark.js"
+  },
+  "keywords": [
+    "travelling-salesperson-problem",
+    "branch-and-bound",
+    "christofides-algorithm",
+    "approximation-algorithm",
+    "mst-doubling",
+    "two-opt",
+    "route-optimization",
+    "capstone-project"
+  ],
+  "author": "Capstone Team",
+  "license": "MIT"
+}

@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TSP Route Optimizer – Optimal & Approximate Route Planning</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+            darkBg: '#0b0f19',
+            cardBg: '#111827',
+            borderSubtle: '#1f293d'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #0b0f19; }
+    ::-webkit-scrollbar-thumb { background: #1f293d; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #374151; }
+
+    .glow-emerald { filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.45)); }
+    .glow-indigo { filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.45)); }
+    .glow-amber { filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.45)); }
+    .glow-cyan { filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.45)); }
+
+    canvas {
+      touch-action: none;
+      cursor: crosshair;
+    }
+  </style>
+</head>
+<body class="bg-[#0b0f19] text-gray-100 min-h-screen font-sans antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- Top Navigation Bar -->
+  <header class="border-b border-gray-800 bg-[#0f172a]/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <i data-lucide="navigation" class="w-6 h-6 text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400">
+            TSP Route Optimizer
+          </h1>
+          <p class="text-xs text-gray-400">Optimal (Branch & Bound) vs Approximation (Christofides & MST)</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <button id="btnOpenTheory" class="px-3.5 py-1.5 rounded-lg border border-gray-700 bg-gray-800/80 hover:bg-gray-700 text-xs font-medium text-gray-300 transition flex items-center space-x-1.5">
+          <i data-lucide="book-open" class="w-4 h-4 text-indigo-400"></i>
+          <span>Theory & Proofs</span>
+        </button>
+        <button id="btnExportModal" class="px-3.5 py-1.5 rounded-lg border border-gray-700 bg-gray-800/80 hover:bg-gray-700 text-xs font-medium text-gray-300 transition flex items-center space-x-1.5">
+          <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i>
+          <span>Export Data</span>
+        </button>
+        <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center space-x-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Capstone Edition</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Control Toolbar Card -->
+    <div class="bg-gray-900/90 border border-gray-800 rounded-2xl p-4 shadow-xl backdrop-blur">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+        
+        <!-- Preset Selector -->
+        <div class="md:col-span-3">
+          <label class="block text-xs font-medium text-gray-400 mb-1 flex items-center space-x-1">
+            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-indigo-400"></i>
+            <span>City Presets</span>
+          </label>
+          <select id="presetSelect" class="w-full bg-gray-800/90 border border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="indiaMetro">🇮🇳 India Tech & Metro Hubs (10 Cities)</option>
+            <option value="usMetros">🇺🇸 US Major Metros (14 Cities)</option>
+            <option value="europeCapitals">🇪🇺 European Capitals (12 Cities)</option>
+            <option value="small6">⚡ Quick Verification (6 Cities)</option>
+            <option value="tsplibBays29">🏛️ TSPLIB Benchmark bays29 (29 Cities)</option>
+            <option value="clustered30">📦 Logistics Clusters (30 Cities)</option>
+            <option value="custom">✏️ Custom Interactive Canvas</option>
+          </select>
+        </div>
+
+        <!-- City Count Slider & Generator -->
+        <div class="md:col-span-4">
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-xs font-medium text-gray-400 flex items-center space-x-1">
+              <i data-lucide="sliders" class="w-3.5 h-3.5 text-purple-400"></i>
+              <span>City Count: <span id="cityCountLabel" class="text-indigo-400 font-bold">10</span></span>
+            </label>
+            <span id="bbWarning" class="text-[10px] text-amber-400 hidden">⚠️ N > 16: B&B skipped (O(N!))</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <input type="range" id="cityRange" min="4" max="60" value="10" class="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+            <button id="btnRandomGen" title="Generate Random" class="p-2 rounded-xl border border-gray-700 bg-gray-800 hover:bg-gray-700 text-gray-300 transition">
+              <i data-lucide="shuffle" class="w-4 h-4"></i>
+            </button>
+            <button id="btnCircleGen" title="Generate Circular Polygon" class="p-2 rounded-xl border border-gray-700 bg-gray-800 hover:bg-gray-700 text-gray-300 transition">
+              <i data-lucide="circle-dot" class="w-4 h-4"></i>
+            </button>
+            <button id="btnClearCanvas" title="Clear All Cities" class="p-2 rounded-xl border border-red-900/40 bg-red-950/20 hover:bg-red-900/40 text-red-400 transition">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Exact Solver Safety Checkbox -->
+        <div class="md:col-span-2 flex flex-col justify-center">
+          <label class="flex items-center space-x-2 cursor-pointer select-none">
+            <input type="checkbox" id="checkIncludeBB" checked class="w-4 h-4 rounded bg-gray-800 border-gray-700 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-gray-900">
+            <span class="text-xs text-gray-300">Run B&B (Exact)</span>
+          </label>
+          <span class="text-[11px] text-gray-500 mt-0.5">Optimal for N &le; 16</span>
+        </div>
+
+        <!-- Primary Action Button -->
+        <div class="md:col-span-3 flex space-x-2">
+          <button id="btnSolveAll" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition flex items-center justify-center space-x-2">
+            <i data-lucide="play" class="w-4 h-4 fill-white"></i>
+            <span>Solve & Compare</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Main Workspace Grid: Canvas & Route View (Left) + KPIs & Metrics (Right) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Left Column: Interactive Canvas & Route Visualizer (7 Cols) -->
+      <div class="lg:col-span-7 space-y-4">
+        <div class="bg-gray-900/90 border border-gray-800 rounded-2xl p-4 shadow-xl flex flex-col">
+          
+          <!-- Canvas Header & Visual Toggles -->
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3 pb-3 border-b border-gray-800">
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Canvas View</span>
+              <span class="text-xs text-gray-500">(Click to add city, drag to move)</span>
+            </div>
+
+            <!-- Algorithm Layer Selector -->
+            <div class="flex items-center space-x-1.5 flex-wrap gap-y-1">
+              <button data-layer="all" class="layer-pill active px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-800 text-white border border-gray-700 hover:bg-gray-700 transition">
+                All Overlaid
+              </button>
+              <button data-layer="branchAndBound" class="layer-pill px-2.5 py-1 rounded-lg text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 transition">
+                B&B (Exact)
+              </button>
+              <button data-layer="christofides" class="layer-pill px-2.5 py-1 rounded-lg text-xs font-medium text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 transition">
+                Christofides
+              </button>
+              <button data-layer="twoOpt" class="layer-pill px-2.5 py-1 rounded-lg text-xs font-medium text-cyan-400 bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 transition">
+                2-Opt
+              </button>
+              <button data-layer="mst2Approx" class="layer-pill px-2.5 py-1 rounded-lg text-xs font-medium text-amber-400 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 transition">
+                MST 2-Approx
+              </button>
+            </div>
+          </div>
+
+          <!-- Canvas Container -->
+          <div class="relative w-full aspect-[4/3] bg-[#070b14] rounded-xl overflow-hidden border border-gray-800/80 shadow-inner">
+            <canvas id="tspCanvas" class="w-full h-full block"></canvas>
+
+            <!-- Coordinate / Helper Overlay HUD -->
+            <div class="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-gray-900/80 backdrop-blur border border-gray-800 text-[11px] text-gray-400 flex items-center space-x-2">
+              <span id="hudCoords">X: 0, Y: 0</span>
+              <span>•</span>
+              <span id="hudCityCount">0 Cities</span>
+            </div>
+
+            <!-- Active Route Legend HUD -->
+            <div id="canvasLegend" class="absolute top-3 right-3 px-3 py-2 rounded-xl bg-gray-900/85 backdrop-blur border border-gray-800 text-xs space-y-1">
+              <div class="flex items-center space-x-2">
+                <span class="w-3 h-0.5 bg-emerald-400 inline-block rounded"></span>
+                <span class="text-gray-300">Branch & Bound (OPT)</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="w-3 h-0.5 bg-indigo-400 inline-block rounded"></span>
+                <span class="text-gray-300">Christofides (1.5-Approx)</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="w-3 h-0.5 bg-cyan-400 inline-block rounded"></span>
+                <span class="text-gray-300">Christofides + 2-Opt</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="w-3 h-0.5 bg-amber-400 inline-block rounded"></span>
+                <span class="text-gray-300">2-Approximation (MST)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Animation & Playback Bar -->
+          <div class="mt-3 flex items-center justify-between text-xs text-gray-400 pt-2">
+            <div class="flex items-center space-x-2">
+              <button id="btnAnimate" class="px-3 py-1.5 rounded-lg border border-gray-700 bg-gray-800 hover:bg-gray-700 text-gray-200 font-medium transition flex items-center space-x-1.5">
+                <i data-lucide="play-circle" class="w-4 h-4 text-indigo-400"></i>
+                <span id="animBtnText">Animate Tour</span>
+              </button>
+              <button id="btnResetAnim" class="px-2.5 py-1.5 rounded-lg border border-gray-700 bg-gray-800 hover:bg-gray-700 text-gray-300 transition">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <span>Speed:</span>
+              <input type="range" id="animSpeed" min="1" max="5" value="3" class="w-24 h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Right Column: Live Comparison Cards & Table (5 Cols) -->
+      <div class="lg:col-span-5 space-y-4">
+
+        <!-- KPI Cards Grid -->
+        <div class="grid grid-cols-2 gap-3">
+          
+          <!-- Best Distance Card -->
+          <div class="bg-gray-900/90 border border-gray-800 rounded-xl p-3.5 shadow-lg">
+            <div class="flex items-center justify-between text-gray-400 mb-1">
+              <span class="text-xs font-medium">Optimal / Best Cost</span>
+              <i data-lucide="award" class="w-4 h-4 text-emerald-400"></i>
+            </div>
+            <div id="statBestCost" class="text-xl font-bold text-emerald-400">--</div>
+            <div id="statBestAlgo" class="text-[11px] text-gray-400 truncate mt-0.5">Click Solve to compute</div>
+          </div>
+
+          <!-- Fast Execution Champion -->
+          <div class="bg-gray-900/90 border border-gray-800 rounded-xl p-3.5 shadow-lg">
+            <div class="flex items-center justify-between text-gray-400 mb-1">
+              <span class="text-xs font-medium">Fastest Runtime</span>
+              <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+            </div>
+            <div id="statFastTime" class="text-xl font-bold text-amber-400">--</div>
+            <div id="statFastAlgo" class="text-[11px] text-gray-400 truncate mt-0.5">--</div>
+          </div>
+
+          <!-- B&B Pruning Efficiency -->
+          <div class="bg-gray-900/90 border border-gray-800 rounded-xl p-3.5 shadow-lg">
+            <div class="flex items-center justify-between text-gray-400 mb-1">
+              <span class="text-xs font-medium">B&B Pruned Nodes</span>
+              <i data-lucide="git-branch" class="w-4 h-4 text-purple-400"></i>
+            </div>
+            <div id="statPrunedNodes" class="text-xl font-bold text-purple-400">--</div>
+            <div id="statExploredNodes" class="text-[11px] text-gray-400 mt-0.5">Explored: --</div>
+          </div>
+
+          <!-- Approximation Quality (Gap %) -->
+          <div class="bg-gray-900/90 border border-gray-800 rounded-xl p-3.5 shadow-lg">
+            <div class="flex items-center justify-between text-gray-400 mb-1">
+              <span class="text-xs font-medium">Christofides Gap</span>
+              <i data-lucide="percent" class="w-4 h-4 text-indigo-400"></i>
+            </div>
+            <div id="statChrisGap" class="text-xl font-bold text-indigo-400">--</div>
+            <div class="text-[11px] text-gray-400 mt-0.5">Bound: &le; 50% (&le; 1.5x)</div>
+          </div>
+
+        </div>
+
+        <!-- Comparative Metrics Table -->
+        <div class="bg-gray-900/90 border border-gray-800 rounded-2xl p-4 shadow-xl">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center space-x-1.5">
+              <i data-lucide="table" class="w-4 h-4 text-indigo-400"></i>
+              <span>Empirical Algorithm Comparison</span>
+            </h3>
+            <span class="text-[11px] text-gray-500">Real-time metrics</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-gray-800 text-gray-400 font-semibold">
+                  <th class="pb-2">Algorithm</th>
+                  <th class="pb-2 text-right">Cost</th>
+                  <th class="pb-2 text-right">Time</th>
+                  <th class="pb-2 text-right">Gap %</th>
+                  <th class="pb-2 text-center">Ratio</th>
+                </tr>
+              </thead>
+              <tbody id="metricsTableBody" class="divide-y divide-gray-800/60 font-mono">
+                <!-- Dynamically populated rows -->
+                <tr>
+                  <td colspan="5" class="py-6 text-center text-gray-500 font-sans text-xs">
+                    Select a preset or click <strong>Solve & Compare</strong> to evaluate algorithms.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+        <!-- Tour Path Inspector Card -->
+        <div class="bg-gray-900/90 border border-gray-800 rounded-2xl p-4 shadow-xl">
+          <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+            <span>Computed Tour Sequence</span>
+            <span id="activeAlgoBadge" class="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              Optimal Tour
+            </span>
+          </h4>
+          <div id="tourSequenceText" class="p-2.5 bg-gray-950 rounded-xl border border-gray-800 text-[11px] text-gray-300 font-mono break-all max-h-24 overflow-y-auto">
+            Awaiting route calculation...
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Analytics & Benchmark Charts Section -->
+    <div class="bg-gray-900/90 border border-gray-800 rounded-2xl p-6 shadow-xl space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-800">
+        <div>
+          <h2 class="text-base font-bold text-gray-100 flex items-center space-x-2">
+            <i data-lucide="bar-chart-3" class="w-5 h-5 text-indigo-400"></i>
+            <span>Performance & Complexity Benchmarking</span>
+          </h2>
+          <p class="text-xs text-gray-400">Visualizing execution runtime explosion and route cost trade-offs</p>
+        </div>
+
+        <button id="btnRunScalabilitySuite" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white shadow-md shadow-indigo-600/20 transition flex items-center space-x-1.5">
+          <i data-lucide="cpu" class="w-4 h-4"></i>
+          <span>Run Scalability Benchmark (N=4 to 40)</span>
+        </button>
+      </div>
+
+      <!-- Charts Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+        
+        <!-- Chart 1: Current Instance Cost Comparison -->
+        <div class="bg-gray-950/70 border border-gray-800/80 rounded-xl p-4">
+          <h4 class="text-xs font-semibold text-gray-300 mb-2">Total Route Cost (Lower is Better)</h4>
+          <div class="relative h-56">
+            <canvas id="chartCost"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: Current Instance Execution Time -->
+        <div class="bg-gray-950/70 border border-gray-800/80 rounded-xl p-4">
+          <h4 class="text-xs font-semibold text-gray-300 mb-2">Execution Time in ms (Log Scale)</h4>
+          <div class="relative h-56">
+            <canvas id="chartTime"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 3: Scalability Curve (Time vs Problem Size N) -->
+        <div class="bg-gray-950/70 border border-gray-800/80 rounded-xl p-4">
+          <h4 class="text-xs font-semibold text-gray-300 mb-2">Scalability: Time vs Problem Size N</h4>
+          <div class="relative h-56">
+            <canvas id="chartScalability"></canvas>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Modal: Theory & Mathematical Proofs -->
+  <div id="theoryModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-gray-900 border border-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl">
+      
+      <!-- Modal Header -->
+      <div class="p-5 border-b border-gray-800 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="book-open" class="w-5 h-5 text-indigo-400"></i>
+          <h3 class="text-lg font-bold text-gray-100">Theoretical Formulations & Approximation Proofs</h3>
+        </div>
+        <button id="btnCloseTheory" class="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto space-y-6 text-sm text-gray-300 leading-relaxed">
+        
+        <!-- Branch & Bound Formulation -->
+        <section class="space-y-2">
+          <h4 class="text-base font-bold text-emerald-400 flex items-center space-x-2">
+            <span>1. Branch and Bound (Reduced Cost Matrix Method)</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">Exact Optimal: O(N!)</span>
+          </h4>
+          <p>
+            The Branch and Bound algorithm constructs a state-space tree of candidate partial routes. At each node, a lower bound on the completion cost of any tour starting with that prefix is computed using <strong>matrix reduction</strong> (Little et al.):
+          </p>
+          <div class="p-3 bg-gray-950 rounded-lg border border-gray-800 font-mono text-xs text-indigo-300">
+            Lower Bound L = L_parent + cost(u, v) + &sum; row_min(reduced) + &sum; col_min(reduced)
+          </div>
+          <ul class="list-disc list-inside text-xs space-y-1 text-gray-400 pl-2">
+            <li><strong>Row & Column Reduction:</strong> Subtracting row/column minimums preserves the relative ordering of tours while extracting a guaranteed lower bound.</li>
+            <li><strong>Pruning Criterion:</strong> Any partial path with <span class="font-mono text-indigo-300">bound &ge; best_cost</span> is immediately pruned, eliminating large swaths of the factorial search space.</li>
+          </ul>
+        </section>
+
+        <!-- Christofides 1.5-Approximation -->
+        <section class="space-y-2">
+          <h4 class="text-base font-bold text-indigo-400 flex items-center space-x-2">
+            <span>2. Christofides-Serdyukov Algorithm</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20">Factor &le; 1.5: O(N&sup3;)</span>
+          </h4>
+          <p>
+            Christofides' algorithm guarantees a solution within <strong>1.5&times; OPT</strong> for Metric TSP (where the triangle inequality holds: <span class="font-mono">d(i,k) &le; d(i,j) + d(j,k)</span>):
+          </p>
+          <ol class="list-decimal list-inside text-xs space-y-1 text-gray-400 pl-2">
+            <li><strong>MST Construction:</strong> Compute Minimum Spanning Tree $T$ ($cost(T) \le OPT$).</li>
+            <li><strong>Odd Degree Set $O$:</strong> Find vertices with odd degrees in $T$. By the Handshaking Lemma, $|O|$ is even.</li>
+            <li><strong>Minimum Weight Perfect Matching $M$:</strong> Match vertices of $O$ such that $cost(M) \le 0.5 \times OPT$.</li>
+            <li><strong>Eulerian Multigraph $H = T \cup M$:</strong> Every vertex now has even degree, guaranteeing an Eulerian circuit.</li>
+            <li><strong>Shortcutting:</strong> Traverse the circuit, shortcutting already visited vertices:
+              <div class="mt-1 font-mono text-indigo-300">cost(Tour) &le; cost(T) + cost(M) &le; OPT + 0.5 OPT = 1.5 &times; OPT</div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- 2-Approximation Algorithm -->
+        <section class="space-y-2">
+          <h4 class="text-base font-bold text-amber-400 flex items-center space-x-2">
+            <span>3. 2-Approximation Algorithm (MST Doubling)</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">Factor &le; 2.0: O(N&sup2;)</span>
+          </h4>
+          <p>
+            Doubling the edges of an MST $T$ yields a connected multigraph where all degrees are even. The Eulerian tour has total cost $2 \times cost(T) \le 2 \times OPT$. Shortcutting via preorder DFS guarantees:
+          </p>
+          <div class="p-3 bg-gray-950 rounded-lg border border-gray-800 font-mono text-xs text-amber-300">
+            cost(Tour_MST) &le; 2 &times; cost(T) &le; 2.0 &times; OPT
+          </div>
+        </section>
+
+        <!-- 2-Opt Local Search -->
+        <section class="space-y-2">
+          <h4 class="text-base font-bold text-cyan-400 flex items-center space-x-2">
+            <span>4. 2-Opt Local Search Improvement</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">Polynomial Local Search: O(N&sup2;)</span>
+          </h4>
+          <p>
+            Takes an initial approximation tour and repeatedly tests pairs of edges $(u_1, u_2)$ and $(v_1, v_2)$. If reversing the intermediate subpath reduces total distance, the 2-exchange is executed. In practice, this brings Christofides tours to within <strong>0% to 3%</strong> of exact optimality.
+          </p>
+        </section>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 border-t border-gray-800 flex justify-end">
+        <button id="btnCloseTheoryBottom" class="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-xs font-semibold text-gray-200">
+          Close Window
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal: Export Data -->
+  <div id="exportModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-gray-900 border border-gray-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-800">
+        <h3 class="text-base font-bold text-gray-100 flex items-center space-x-2">
+          <i data-lucide="download" class="w-5 h-5 text-emerald-400"></i>
+          <span>Export Benchmark Data</span>
+        </h3>
+        <button id="btnCloseExport" class="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-gray-400">Download route coordinates, algorithm comparison tables, and benchmark logs for reports and presentations.</p>
+
+      <div class="grid grid-cols-1 gap-2 pt-1">
+        <button id="btnExportJSON" class="p-3 rounded-xl border border-gray-800 bg-gray-800/80 hover:bg-gray-700 text-left transition flex items-center space-x-3">
+          <div class="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
+            <i data-lucide="file-json" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-xs font-semibold text-gray-200">Export as JSON</div>
+            <div class="text-[11px] text-gray-400">Complete raw results, tours, and execution timings</div>
+          </div>
+        </button>
+
+        <button id="btnExportCSV" class="p-3 rounded-xl border border-gray-800 bg-gray-800/80 hover:bg-gray-700 text-left transition flex items-center space-x-3">
+          <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+            <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-xs font-semibold text-gray-200">Export Comparison Table as CSV</div>
+            <div class="text-[11px] text-gray-400">Metrics spreadsheet compatible with Excel / Sheets</div>
+          </div>
+        </button>
+
+        <button id="btnExportMarkdown" class="p-3 rounded-xl border border-gray-800 bg-gray-800/80 hover:bg-gray-700 text-left transition flex items-center space-x-3">
+          <div class="p-2 rounded-lg bg-purple-500/10 text-purple-400">
+            <i data-lucide="file-text" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-xs font-semibold text-gray-200">Copy Markdown Report Summary</div>
+            <div class="text-[11px] text-gray-400">Formatted summary table ready to paste into GitHub or report</div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic -->
+  <script type="module" src="src/app.js"></script>
+
+  <script>
+    // Initialize Lucide icons on load
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

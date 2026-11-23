@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "ritwickdey.liveserver",
+    "ms-python.python",
+    "bradlc.vscode-tailwindcss",
+    "esbenp.prettier-vscode"
+  ]
+}
