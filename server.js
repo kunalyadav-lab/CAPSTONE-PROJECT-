@@ -52,12 +52,22 @@ const server = http.createServer((req, res) => {
   }
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log('================================================================');
   console.log('  TRAVELLING SALESPERSON PROBLEM - CAPSTONE PROJECT DASHBOARD   ');
   console.log('================================================================');
   console.log(`  Dashboard running at: http://localhost:${PORT}`);
-  console.log(`  Project root: ${ROOT_DIR}`);
+  console.log(`  Alternative URL:     http://127.0.0.1:${PORT}`);
+  console.log(`  Project root:        ${ROOT_DIR}`);
   console.log('  Press Ctrl+C to terminate server.');
   console.log('================================================================\n');
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is currently in use. Trying port ${Number(PORT) + 1}...`);
+    server.listen(Number(PORT) + 1, '0.0.0.0');
+  } else {
+    console.error('Server error:', err);
+  }
 });
