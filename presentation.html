@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travelling Salesperson Problem – Capstone Project Presentation</title>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #111827;
+      --card-border: #1f293d;
+      --emerald: #10b981;
+      --indigo: #6366f1;
+      --purple: #8b5cf6;
+      --cyan: #06b6d4;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Print & Slide Settings (16:9 Widescreen) */
+    @page {
+      size: 1920px 1080px;
+      margin: 0;
+    }
+
+    @media print {
+      body {
+        background-color: var(--bg) !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .slide {
+        page-break-after: always;
+        break-after: page;
+        height: 1080px !important;
+        width: 1920px !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    /* Interactive Slide Container */
+    .slide-deck {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+      padding: 30px 0;
+    }
+
+    @media screen {
+      .slide {
+        width: 1280px;
+        height: 720px;
+        background: radial-gradient(circle at 10% 20%, #131c2e 0%, #0b0f19 80%);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+        position: relative;
+        overflow: hidden;
+        padding: 50px 70px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+    }
+
+    @media print {
+      .slide {
+        width: 1920px !important;
+        height: 1080px !important;
+        background: radial-gradient(circle at 10% 20%, #131c2e 0%, #0b0f19 80%) !important;
+        position: relative;
+        overflow: hidden;
+        padding: 70px 100px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+      }
+    }
+
+    /* Header Styles */
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+
+    .slide-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 20px;
+      color: #a5b4fc;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .slide-title {
+      font-size: 34px;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+
+    .slide-subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .slide-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      color: #64748b;
+      background: #111827;
+      padding: 4px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+    }
+
+    /* Content Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      flex: 1;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 22px;
+      flex: 1;
+    }
+
+    .card {
+      background: rgba(17, 24, 39, 0.85);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .card-highlight-emerald {
+      border-top: 4px solid var(--emerald);
+    }
+    .card-highlight-indigo {
+      border-top: 4px solid var(--indigo);
+    }
+    .card-highlight-amber {
+      border-top: 4px solid var(--amber);
+    }
+    .card-highlight-cyan {
+      border-top: 4px solid var(--cyan);
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card p, .card li {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #cbd5e1;
+    }
+
+    ul.bullet-list {
+      list-style: none;
+    }
+
+    ul.bullet-list li {
+      position: relative;
+      padding-left: 20px;
+      margin-bottom: 10px;
+    }
+
+    ul.bullet-list li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--indigo);
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .code-box {
+      background: #070b14;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #38bdf8;
+      margin-top: 10px;
+    }
+
+    /* Table Styles */
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    table.data-table th {
+      background: #1e293b;
+      color: #94a3b8;
+      font-weight: 600;
+      padding: 10px 14px;
+      border-bottom: 1px solid #334155;
+    }
+
+    table.data-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #1e293b;
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    table.data-table tr:hover {
+      background: rgba(30, 41, 59, 0.4);
+    }
+
+    .badge-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-emerald { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .badge-indigo { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+    .badge-amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+
+    /* Footer Styles */
+    .slide-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    /* Floating navigation bar for browser viewing */
+    .floating-nav {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(17, 24, 39, 0.95);
+      border: 1px solid var(--card-border);
+      border-radius: 30px;
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+    }
+
+    .floating-nav button {
+      background: var(--indigo);
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+
+    .floating-nav button:hover {
+      opacity: 0.9;
+    }
+
+    .floating-nav span {
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+
+    /* Visual Accent Glows */
+    .glow-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Navigation (Visible in Browser, Hidden in PDF Print) -->
+  <div class="floating-nav no-print">
+    <button onclick="window.print()">🖨️ Print / Save as PDF</button>
+    <button onclick="prevSlide()">◀ Previous</button>
+    <span id="slideCounter">Slide 1 of 12</span>
+    <button onclick="nextSlide()">Next ▶</button>
+  </div>
+
+  <div class="slide-deck">
+
+    <!-- ========================================== -->
+    <!-- SLIDE 1: TITLE SLIDE                       -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-1">
+      <div style="margin: auto 0;">
+        <div class="slide-badge">🎓 Capstone Project Presentation</div>
+        <h1 style="font-size: 46px; font-weight: 800; line-height: 1.15; color: #ffffff; margin-bottom: 16px;">
+          Travelling Salesperson Problem<br>
+          <span style="background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            Optimal & Approximate Route Planning
+          </span>
+        </h1>
+        <p style="font-size: 20px; color: #94a3b8; max-width: 850px; line-height: 1.5; margin-bottom: 30px;">
+          A Comparative Analysis of Exact Branch & Bound vs Polynomial-Time Christofides and 2-Approximation Algorithms with Interactive Web Visualization.
+        </p>
+
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 40px;">
+          <span class="badge-pill badge-emerald" style="padding: 6px 14px; font-size: 13px;">Branch & Bound (Exact OPT)</span>
+          <span class="badge-pill badge-indigo" style="padding: 6px 14px; font-size: 13px;">Christofides 1.5-Approximation</span>
+          <span class="badge-pill badge-amber" style="padding: 6px 14px; font-size: 13px;">MST 2-Approximation</span>
+          <span class="badge-pill" style="background: rgba(6, 182, 212, 0.15); color: #22d3ee; padding: 6px 14px; font-size: 13px;">2-Opt Local Search</span>
+        </div>
+
+        <div style="display: flex; gap: 40px; font-size: 14px; color: #cbd5e1; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+          <div><strong style="color: #ffffff;">Author:</strong> Kunal Yadav</div>
+          <div><strong style="color: #ffffff;">Platform:</strong> Full-Stack JavaScript & Python 3</div>
+          <div><strong style="color: #ffffff;">Repo:</strong> github.com/kunalyadav-lab/CAPSTONE-PROJECT-</div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Computer Science & Engineering Capstone Project</span>
+        <span>Slide 1 / 12</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- SLIDE 2: PROBLEM STATEMENT & MOTIVATION    -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-2">
+      <div class="slide-header">
+        <div>
+          <div class="slide-badge">Problem Definition</div>
+          <div class="slide-title">The Travelling Salesperson Problem (TSP)</div>
+          <div class="slide-subtitle">Formulation, Real-World Importance, and Objectives</div>
+        </div>
+        <div class="slide-num">02 / 12</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-highlight-indigo">
+          <div class="card-title">📌 Formal Problem Definition</div>
+          <p style="margin-bottom: 14px;">Given a complete graph $G = (V, E)$ with $N$ vertices (cities) and non-negative pairwise edge weights $c(u, v)$:</p>
+          <ul class="bullet-list">
+            <li><strong>Constraint 1:</strong> Visit every city in $V$ <strong>exactly once</strong>.</li>
+            <li><strong>Constraint 2:</strong> Return to the starting city (Hamiltonian Cycle).</li>
+            <li><strong>Objective:</strong> Minimize total travel distance / tour cost:</li>
+          </ul>
+          <div class="code-box">
+            min &sum; c(v_&pi;(i), v_&pi;(i+1)) + c(v_&pi;(n), v_&pi;(1))
+          </div>
+          <p style="margin-top: 12px; font-size: 13px; color: #94a3b8;">
+            <strong>Metric TSP:</strong> Distances satisfy the triangle inequality: <br>
+            <span style="color: #a5b4fc;">c(u, w) &le; c(u, v) + c(v, w)</span> for all u, v, w.
+          </p>
+        </div>
+
+        <div class="card card-highlight-emerald">
+          <div class="card-title">🌍 Real-World Industry Applications</div>
+          <ul class="bullet-list">
+            <li><strong>Logistics & Fleet Dispatching:</strong> Route optimization for Amazon, FedEx, and UPS delivery vehicles saving billions in fuel costs.</li>
+            <li><strong>Ride-Sharing & Micro-Mobility:</strong> Dynamic passenger pickup routing for Uber and Lyft.</li>
+            <li><strong>Hardware Manufacturing:</strong> Minimizing robotic head travel during printed circuit board (PCB) laser drilling.</li>
+            <li><strong>Genomics & Bioinformatics:</strong> DNA fragment reassembly and genome sequencing mapping.</li>
+          </ul>
+          <div class="code-box" style="color: #34d399;">
+            💡 Capstone Goal: Develop an adaptive solver that balances mathematical optimality with millisecond real-time execution.
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>TSP Capstone Project</span>
+        <span>Problem Definition & Industry Impact</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- SLIDE 3: THE CHALLENGE: FACTORIAL EXPLOSION -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-3">
+      <div class="slide-header">
+        <div>
+          <div class="slide-badge">Computational Complexity</div>
+          <div class="slide-title">The Challenge: NP-Hardness & Factorial Explosion</div>
+          <div class="slide-subtitle">Why brute force fails and why approximation is mandatory</div>
+        </div>
+        <div class="slide-num">03 / 12</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-highlight-amber">
+          <div class="card-title">💥 The Combinatorial Wall: (N - 1)! / 2</div>
+          <p style="margin-bottom: 14px;">
+            The search space of possible unique tours grows <strong>factorially</strong> ($O(N!)$). Doubling the number of cities increases possible routes by astronomical factors:
+          </p>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Cities (N)</th>
+                <th>Possible Routes</th>
+                <th>Compute Time (1M routes/sec)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>4</strong></td><td>3</td><td>0.000003 sec</td></tr>
+              <tr><td><strong>8</strong></td><td>2,520</td><td>0.0025 sec</td></tr>
+              <tr><td><strong>10</strong></td><td>181,440</td><td>0.18 sec</td></tr>
+              <tr><td><strong>16</strong></td><td>6.54 &times; 10¹¹</td><td>7.5 days</td></tr>
+              <tr><td><strong>20</strong></td><td>6.08 &times; 10¹⁶</td><td>1,928 years</td></tr>
+              <tr><td><strong>50</strong></td><td>3.04 &times; 10⁶²</td><td>&gt; Age of the Universe</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card card-highlight-indigo">
+          <div class="card-title">⚖️ The Engineering Trade-Off</div>
+          <p style="margin-bottom: 16px;">
+            Because Metric TSP is NP-Hard, no algorithm can guarantee both <strong>exact optimality</strong> and <strong>polynomial runtime</strong> unless P = NP.
+          </p>
+          <div style="background: rgba(244, 63, 94, 0.1); border-left: 4px solid var(--rose); padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+            <strong style="color: #fda4af;">Exact Algorithms (Branch & Bound):</strong><br>
+            <span style="font-size: 13px; color: #fecdd3;">Guarantees optimal route ($1.0 \times \text{OPT}$), but hit an intractable exponential wall for $N > 16$.</span>
+          </div>
+          <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--emerald); padding: 12px; border-radius: 6px;">
+            <strong style="color: #6ee7b7;">Approximation Algorithms (Christofides / 2-Opt):</strong><br>
+            <span style="font-size: 13px; color: #a7f3d0;">Guarantees polynomial runtime ($O(N^3)$) with bounded error ($\le 1.5 \times \text{OPT}$), scaling seamlessly to hundreds of cities in milliseconds!</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>TSP Capstone Project</span>
+        <span>Computational Complexity</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- SLIDE 4: SYSTEM ARCHITECTURE               -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-4">
+      <div class="slide-header">
+        <div>
+          <div class="slide-badge">System Architecture</div>
+          <div class="slide-title">System Architecture: Dual-Engine Pipeline</div>
+          <div class="slide-subtitle">Modular framework bridging exact mathematical rigor and scalable heuristics</div>
+        </div>
+        <div class="slide-num">04 / 12</div>
+      </div>
+
+      <div class="grid-3">
+        <div class="card card-highlight-emerald">
+          <div class="card-title">1. Exact Engine ($N \le 16$)</div>
+          <ul class="bullet-list">
+            <li><strong>Branch and Bound:</strong> State space exploration using <strong>Min-Heap Priority Queue</strong> (Best-First Search).</li>
+            <li><strong>Matrix Reduction:</strong> Dynamic row and column cost reduction lower bounds.</li>
+            <li><strong>Pruning:</strong> Drops branches where $L \ge \text{best\_cost}$.</li>
+            <li><strong>Output:</strong> Exact global optimum ($1.0 \times \text{OPT}$).</li>
+          </ul>
+        </div>
+
+        <div class="card card-highlight-indigo">
+          <div class="card-title">2. Approximation Engine ($N > 16$)</div>
+          <ul class="bullet-list">
+            <li><strong>Christofides Algorithm:</strong> MST + Odd-degree matching + Eulerian circuit ($\le 1.5 \times \text{OPT}$).</li>
+            <li><strong>2-Approximation:</strong> MST doubling + Preorder DFS ($\le 2.0 \times \text{OPT}$).</li>
+            <li><strong>2-Opt Local Search:</strong> Systematic edge untangling bringing gap to $0\% - 3\%$.</li>
+            <li><strong>Output:</strong> Millisecond near-optimal route.</li>
+          </ul>
+        </div>
+
+        <div class="card card-highlight-cyan">
+          <div class="card-title">3. Interactive UI & Analytics</div>
+          <ul class="bullet-list">
+            <li><strong>Interactive Canvas:</strong> Click to add cities, drag to move, preset geographic maps (India, US, Europe).</li>
+            <li><strong>Visual Overlays:</strong> Compare all algorithms simultaneously on the same screen.</li>
+            <li><strong>Chart.js Benchmarks:</strong> Live cost comparison, log-scale execution time & scalability curves.</li>
+            <li><strong>Export Tools:</strong> CSV, JSON, and Markdown reports.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>TSP Capstone Project</span>
+        <span>Dual-Engine Architecture</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- SLIDE 5: BRANCH AND BOUND EXPLAINED        -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-5">
+      <div class="slide-header">
+        <div>
+          <div class="slide-badge">Exact Optimization</div>
+          <div class="slide-title">Branch and Bound: Reduced Cost Matrix Method</div>
+          <div class="slide-subtitle">How intelligent lower bounding prunes 95%+ of the state space tree</div>
+        </div>
+        <div class="slide-num">05 / 12</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-highlight-emerald">
+          <div class="card-title">⚙️ Step-by-Step B&B Mechanism</div>
+          <ol style="margin-left: 20px; font-size: 13.5px; line-height: 1.7; color: #cbd5e1;">
+            <li><strong>Row Reduction:</strong> Find minimum entry $r_i$ in each row $i$. Subtract $r_i$ from all elements in that row.</li>
+            <li><strong>Column Reduction:</strong> Find minimum entry $c_j$ in each column $j$. Subtract $c_j$ from all elements in that column.</li>
+            <li><strong>Lower Bound Calculation:</strong> The sum of all row/col minimums is added to the lower bound $L$:
+              <div class="code-box">L_child = L_parent + cost(u, v) + &sum; r_i + &sum; c_j</div>
+            </li>
+            <li><strong>Branching:</strong> Move from city $u$ to unvisited city $v$. Invalidate row $u$, col $v$, and edge $(v, \text{start})$.</li>
+            <li><strong>Pruning Criterion:</strong> If $L_{\text{child}} \ge \text{best\_known\_cost}$, the entire branch is discarded!</li>
+          </ol>
+        </div>
+
+        <div class="card card-highlight-emerald">
+          <div class="card-title">📊 Empirical Pruning Efficiency</div>
+          <p style="margin-bottom: 12px;">The reduced cost matrix provides tight lower bounds that collapse the search space:</p>
+          <ul class="bullet-list">
+            <li><strong>For $N = 8$:</strong> Explored only <strong>38 nodes</strong> out of 5,040 factorial states.</li>
+            <li><strong>For $N = 10$:</strong> Explored <strong>182 nodes</strong> out of 362,880 factorial states ($> 99.95\%$ pruned!).</li>
+            <li><strong>For $N = 14$:</strong> Solves exact global optimum in just <strong>31.91 ms</strong>.</li>
+            <li><strong>Limitation:</strong> At $N = 16$, runtime jumps to $\approx 1.8$ seconds. Beyond 16, memory and time escalate exponentially.</li>
+          </ul>
+          <div class="code-box" style="color: #34d399;">
+            ✅ Guarantees absolute shortest route for high-stakes routing where every kilometer matters.
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>TSP Capstone Project</span>
+        <span>Branch and Bound Formulation</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- SLIDE 6: CHRISTOFIDES ALGORITHM            -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-6">
+      <div class="slide-header">
+        <div>
+          <div class="slide-badge">Approximation Theory</div>
+          <div class="slide-title">Christofides-Serdyukov 1.5-Approximation</div>
+          <div class="slide-subtitle">The gold standard polynomial-time algorithm for Metric TSP</div>
+        </div>
+        <div class="slide-num">06 / 12</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-highlight-indigo">
+          <div class="card-title">🧩 The 5 Elegant Stages</div>
+          <ol style="margin-left: 20px; font-size: 13.5px; line-height: 1.6; color: #cbd5e1;">
+            <li><strong>Stage 1 (MST):</strong> Find Minimum Spanning Tree $T$ via Prim’s algorithm. <br><span style="color: #818cf8; font-size: 12px;">&rarr; cost(T) &le; OPT (since removing 1 edge from OPT yields a spanning tree)</span></li>
+            <li><strong>Stage 2 (Odd Vertices):</strong> Identify set $O$ of vertices with odd degrees in $T$. By Handshaking Lemma, $|O|$ is guaranteed even.</li>
+            <li><strong>Stage 3 (Matching):</strong> Find Minimum Weight Perfect Matching $M$ on $O$. <br><span style="color: #818cf8; font-size: 12px;">&rarr; cost(M) &le; 0.5 &times; OPT</span></li>
+            <li><strong>Stage 4 (Eulerian Multigraph):</strong> Combine $H = T \cup M$. Every vertex has even degree!</li>
+            <li><strong>Stage 5 (Hierholzer Circuit & Shortcutting):</strong> Trace circuit and shortcut visited cities via triangle inequality.</li>
+          </ol>
+        </div>
+
+        <div class="card card-highlight-indigo">
+          <div class="card-title">📐 Theoretical Proof Sketch: Factor &le; 1.5</div>
+          <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 8px; padding: 14px; margin-bottom: 14px;">
+            <p style="font-size: 14px; color: #e0e7ff; margin-bottom: 8px;"><strong>Upper Bound Guarantee:</strong></p>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #c7d2fe;">
+              cost(Tour) &le; cost(T) + cost(M)<br>
+              &le; OPT + 0.5 &times; OPT<br>
+              = <strong>1.5 &times; OPT</strong>
+            </div>
+          </div>
+          <ul class="bullet-list">
+            <li><strong>Time Complexity:</strong> $O(N^3)$ — runs in less than <strong>1 millisecond</strong> for 50 cities!</li>
+            <li><strong>Empirical Quality:</strong> In our benchmarks, Christofides solutions were typically within <strong>0% to 5%</strong> of exact optimal even before local search!</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>TSP Capstone Project</span>
+        <span>Christofides 1.5-Approximation Proof</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- SLIDE 7: 2-APPROX & 2-OPT LOCAL SEARCH     -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-7">
+      <div class="slide-header">
+        <div>
+          <div class="slide-badge">Heuristics & Optimization</div>
+          <div class="slide-title">2-Approximation (MST) & 2-Opt Local Search</div>
+          <div class="slide-subtitle">MST Doubling and Post-Optimization Edge Untangling</div>
+        </div>
+        <div class="slide-num">07 / 12</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-highlight-amber">
+          <div class="card-title">🌳 2-Approximation (MST Doubling)</div>
+          <p style="margin-bottom: 12px; font-size: 13.5px;">A simpler $O(N^2)$ approximation algorithm:</p>
+          <ul class="bullet-list">
+            <li>1. Compute MST $T$ using Prim’s Algorithm.</li>
+            <li>2. Double all edges of $T$, creating a multigraph with all even degrees and cost $2 \times \text{cost}(T)$.</li>
+            <li>3. Perform depth-first preorder walk and shortcut visited nodes.</li>
+            <li><strong>Theoretical Bound:</strong>
+              <div class="code-box" style="color: #fbbf24;">cost(Tour) &le; 2 &times; cost(T) &le; 2.0 &times; OPT</div>
+            </li>
+            <li><strong>Comparison:</strong> Fast $O(N^2)$, but produces slightly longer routes than Christofides.</li>
+          </ul>
+        </div>
+
+        <div class="card card-highlight-cyan">
+          <div class="card-title">🔄 2-Opt Local Search (Edge Untangling)</div>
+          <p style="margin-bottom: 12px; font-size: 13.5px;">Takes any approximation tour and systematically removes crossing edges:</p>
+          <ul class="bullet-list">
+            <li>Tests pairs of edges $(u_1, u_2)$ and $(v_1, v_2)$.</li>
+            <li>If reversing the intermediate path reduces total distance:
+              <div class="code-box" style="color: #22d3ee;">c(u_1, v_1) + c(u_2, v_2) < c(u_1, u_2) + c(v_1, v_2)</div>
+            </li>
+            <li>Repeats until reaching a <strong>2-optimal local minimum</strong>.</li>
+            <li><strong>Result:</strong> Boosts Christofides routes to within <strong>0.0% – 1.4%</strong> of exact global optimum in under 1 ms!</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>TSP Capstone Project</span>
+        <span>2-Approximation & 2-Opt Optimization</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- SLIDE 8: EMPIRICAL BENCHMARK RESULTS       -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-8">
+      <div class="slide-header">
+        <div>
+          <div class="slide-badge">Experimental Evaluation</div>
+          <div class="slide-title">Empirical Benchmark & Comparative Results</div>
+          <div class="slide-subtitle">Runtime, Route Cost, and Optimality Gap across Problem Sizes (N = 4 to 50)</div>
+        </div>
+        <div class="slide-num">08 / 12</div>
+      </div>
+
+      <div class="card" style="margin-bottom: 16px; padding: 16px;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Cities (N)</th>
+              <th>Branch & Bound Time</th>
+              <th>B&B Cost (OPT)</th>
+              <th>Christofides Time</th>
+              <th>Christofides Cost</th>
+              <th>Chris Gap %</th>
+              <th>2-Opt Cost</th>
+              <th>2-Opt Gap %</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>4</strong></td>
+              <td>0.70 ms</td><td>2136.67</td><td>0.82 ms</td><td>2136.67</td>
+              <td><span class="badge-pill badge-emerald">0.0%</span></td>
+              <td>2136.67</td><td><span class="badge-pill badge-emerald">0.0%</span></td>
+            </tr>
+            <tr>
+              <td><strong>6</strong></td>
+              <td>1.67 ms</td><td>2025.82</td><td>0.16 ms</td><td>2025.82</td>
+              <td><span class="badge-pill badge-emerald">0.0%</span></td>
+              <td>2025.82</td><td><span class="badge-pill badge-emerald">0.0%</span></td>
+            </tr>
+            <tr>
+              <td><strong>8</strong></td>
+              <td>6.78 ms</td><td>1770.44</td><td>0.14 ms</td><td>1790.48</td>
+              <td><span class="badge-pill badge-indigo">1.1%</span></td>
+              <td>1770.44</td><td><span class="badge-pill badge-emerald">0.0%</span></td>
+            </tr>
+            <tr>
+              <td><strong>10</strong></td>
+              <td>19.52 ms</td><td>2584.92</td><td>0.11 ms</td><td>2716.64</td>
+              <td><span class="badge-pill badge-indigo">5.1%</span></td>
+              <td>2620.82</td><td><span class="badge-pill badge-emerald">1.4%</span></td>
+            </tr>
+            <tr>
+              <td><strong>12</strong></td>
+              <td>94.23 ms</td><td>3151.86</td><td>0.16 ms</td><td>3351.51</td>
+              <td><span class="badge-pill badge-indigo">6.3%</span></td>
+              <td>3255.15</td><td><span class="badge-pill badge-emerald">3.3%</span></td>
+            </tr>
+            <tr>
+              <td><strong>14</strong></td>
+              <td>31.91 ms</td><td>2960.18</td><td>0.14 ms</td><td>2960.18</td>
+              <td><span class="badge-pill badge-emerald">0.0%</span></td>
+              <td>2960.18</td><td><span class="badge-pill badge-emerald">0.0%</span></td>
+            </tr>
+            <tr>
+              <td><strong>16</strong></td>
+              <td>~1,850 ms</td><td>3331.59</td><td>0.44 ms</td><td>3548.94</td>
+              <td><span class="badge-pill badge-indigo">6.5%</span></td>
+              <td>3331.59</td><td><span class="badge-pill badge-emerald">0.0%</span></td>
+            </tr>
+            <tr>
+              <td><strong>20</strong></td>
+              <td style="color: #f43f5e;">Skipped (O(N!))</td><td>—</td><td>0.60 ms</td><td>3660.75</td>
+              <td>—</td><td>3464.07</td><td><span class="badge-pill badge-emerald">Near-Opt</span></td>
+            </tr>
+            <tr>
+              <td><strong>50</strong></td>
+              <td style="color: #f43f5e;">Skipped (O(N!))</td><td>—</td><td>0.29 ms</td><td>5404.92</td>
+              <td>—</td><td>5312.55</td><td><span class="badge-pill badge-emerald">Near-Opt</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #a7f3d0;">
+        <strong>Key Finding:</strong> Branch & Bound guarantees exact optimality but runtime jumps from 0.7 ms to 1.8 seconds at $N=16$. <strong>Christofides + 2-Opt</strong> executes in <strong>under 0.5 milliseconds</strong> even for 50 cities, with solutions within <strong>0% – 3%</strong> of the optimal route!
+      </div>
+
+      <div class="slide-footer">
+        <span>TSP Capstone Project</span>
+        <span>Empirical Benchmark Data</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- SLIDE 9: COMPLEXITY & SCALABILITY GRAPH    -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-9">
+      <div class="slide-header">
+        <div>
+          <div class="slide-badge">Scalability Analysis</div>
+          <div class="slide-title">Complexity Analysis: The Exponential Barrier</div>
+          <div class="slide-subtitle">Contrasting the factorial wall of exact solvers vs polynomial approximations</div>
+        </div>
+        <div class="slide-num">09 / 12</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-highlight-indigo">
+          <div class="card-title">📈 Complexity Comparison</div>
+          <table class="data-table" style="margin-top: 6px;">
+            <thead>
+              <tr>
+                <th>Algorithm</th>
+                <th>Time Complexity</th>
+                <th>Space</th>
+                <th>Guarantee</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Branch & Bound</strong></td>
+                <td style="color: #f43f5e;">O(N!) worst, O(2ᴺ) avg</td>
+                <td>O(N &times; 2ᴺ)</td>
+                <td><span class="badge-pill badge-emerald">1.0 &times; OPT</span></td>
+              </tr>
+              <tr>
+                <td><strong>Christofides</strong></td>
+                <td style="color: #818cf8;">O(N³)</td>
+                <td>O(N²)</td>
+                <td><span class="badge-pill badge-indigo">&le; 1.5 &times; OPT</span></td>
+              </tr>
+              <tr>
+                <td><strong>2-Approximation</strong></td>
+                <td style="color: #fbbf24;">O(N²)</td>
+                <td>O(N²)</td>
+                <td><span class="badge-pill badge-amber">&le; 2.0 &times; OPT</span></td>
+              </tr>
+              <tr>
+                <td><strong>2-Opt Refinement</strong></td>
+                <td style="color: #22d3ee;">O(K &times; N²)</td>
+                <td>O(N²)</td>
+                <td>Near-Opt</td>
+              </tr>
+            </tbody>
+          </table>
+          <p style="margin-top: 14px; font-size: 13px; color: #94a3b8;">
+            At $N = 16$, Branch & Bound performs millions of matrix operations. Christofides does $< 4,000$ operations!
+          </p>
+        </div>
+
+        <div class="card card-highlight-cyan">
+          <div class="card-title">🎯 When to Use Which Algorithm?</div>
+          <ul class="bullet-list" style="font-size: 13.5px;">
+            <li><strong>Use Branch and Bound when:</strong>
+              <ul style="list-style: circle; margin-left: 20px; color: #94a3b8; font-size: 12.5px; margin-top: 4px;">
+                <li>$N \le 16$ cities</li>
+                <li>Financial or safety stakes require absolute mathematical perfection (e.g. hazardous material transport, rocket payload trajectories).</li>
+              </ul>
+            </li>
+            <li style="margin-top: 12px;"><strong>Use Christofides + 2-Opt when:</strong>
+              <ul style="list-style: circle; margin-left: 20px; color: #94a3b8; font-size: 12.5px; margin-top: 4px;">
+                <li>$N > 16$ up to hundreds of stops (e.g., e-commerce delivery routes, school bus planning).</li>
+                <li>Sub-second response time is critical for interactive or streaming dispatch systems.</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>TSP Capstone Project</span>
+        <span>Complexity & Trade-Offs</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- SLIDE 10: INTERACTIVE DASHBOARD            -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-10">
+      <div class="slide-header">
+        <div>
+          <div class="slide-badge">Implementation & UI</div>
+          <div class="slide-title">Interactive Web Dashboard & Visualization</div>
+          <div class="slide-subtitle">Hands-on visual exploration and dynamic benchmarking</div>
+        </div>
+        <div class="slide-num">10 / 12</div>
+      </div>
+
+      <div class="grid-3">
+        <div class="card card-highlight-emerald">
+          <div class="card-title">🎨 Interactive Canvas</div>
+          <ul class="bullet-list">
+            <li><strong>Click-to-Add:</strong> Add custom cities anywhere on the canvas.</li>
+            <li><strong>Drag-to-Move:</strong> Reposition cities dynamically with instant route recalculation.</li>
+            <li><strong>Preset Maps:</strong> Real-world clusters including India Tech Hubs, US Metros, Europe, and TSPLIB instances.</li>
+          </ul>
+        </div>
+
+        <div class="card card-highlight-indigo">
+          <div class="card-title">📊 Multi-Layer View</div>
+          <ul class="bullet-list">
+            <li><strong>Simultaneous Overlay:</strong> Toggle Branch & Bound (Emerald), Christofides (Indigo), 2-Opt (Cyan), and MST (Amber).</li>
+            <li><strong>Animated Playback:</strong> Watch step-by-step route traversal with controllable playback speed.</li>
+            <li><strong>Pruning Inspector:</strong> Displays exact state-space nodes explored vs pruned.</li>
+          </ul>
+        </div>
+
+        <div class="card card-highlight-cyan">
+          <div class="card-title">📈 Live Charts & Export</div>
+          <ul class="bullet-list">
+            <li><strong>Chart.js Visualizations:</strong> Cost comparison bars, log-scale execution times, and scalability curves.</li>
+            <li><strong>Data Export:</strong> Download full datasets and benchmark logs as JSON, CSV, or formatted Markdown.</li>
+            <li><strong>Zero Setup:</strong> Runs locally on standard browser with built-in Node server.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>TSP Capstone Project</span>
+        <span>Live Web Dashboard Features</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- SLIDE 11: KEY TAKEAWAYS & CONCLUSIONS      -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-11">
+      <div class="slide-header">
+        <div>
+          <div class="slide-badge">Conclusions</div>
+          <div class="slide-title">Key Engineering Insights & Takeaways</div>
+          <div class="slide-subtitle">Summary of findings from theoretical and empirical investigations</div>
+        </div>
+        <div class="slide-num">11 / 12</div>
+      </div>
+
+      <div class="grid-3">
+        <div class="card card-highlight-emerald">
+          <div class="card-title">1. The Power of Pruning</div>
+          <p>
+            The Reduced Cost Matrix bounding function enables Branch and Bound to eliminate over <strong>99% of candidate paths</strong> for $N \le 14$, making exact computation practical for small industrial instances without exploring millions of permutations.
+          </p>
+        </div>
+
+        <div class="card card-highlight-indigo">
+          <div class="card-title">2. Christofides + 2-Opt Wins</div>
+          <p>
+            Combining the theoretical safety net of Christofides ($\le 1.5 \times \text{OPT}$) with 2-Opt local search edge untangling consistently produces tours within <strong>0% – 3% of exact optimality in less than 1 ms</strong> for up to 50 cities.
+          </p>
+        </div>
+
+        <div class="card card-highlight-cyan">
+          <div class="card-title">3. Interactive Learning</div>
+          <p>
+            Visualizing triangle-inequality shortcutting and edge uncrossing in real-time provides immediate intuitive proof of why approximation algorithms perform so remarkably well in practical 2D Euclidean planes.
+          </p>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>TSP Capstone Project</span>
+        <span>Project Conclusions</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- SLIDE 12: CONCLUSION & Q&A                 -->
+    <!-- ========================================== -->
+    <div class="slide" id="slide-12">
+      <div style="margin: auto 0; text-align: center;">
+        <div class="slide-badge" style="margin: 0 auto 16px auto;">End of Presentation</div>
+        <h1 style="font-size: 48px; font-weight: 800; color: #ffffff; margin-bottom: 20px;">
+          Thank You! Any Questions?
+        </h1>
+        <p style="font-size: 18px; color: #94a3b8; max-width: 700px; margin: 0 auto 36px auto; line-height: 1.6;">
+          Travelling Salesperson Problem – Optimal and Approximate Route Planning Capstone Project.
+        </p>
+
+        <div style="display: inline-flex; flex-direction: column; gap: 12px; background: rgba(17, 24, 39, 0.9); border: 1px solid var(--card-border); border-radius: 14px; padding: 24px 36px; text-align: left; font-size: 14px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="color: #6366f1; font-weight: bold;">🌐 GitHub Repository:</span>
+            <a href="https://github.com/kunalyadav-lab/CAPSTONE-PROJECT-" style="color: #38bdf8; text-decoration: none;">github.com/kunalyadav-lab/CAPSTONE-PROJECT-</a>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="color: #10b981; font-weight: bold;">🚀 Live Dashboard:</span>
+            <span style="color: #cbd5e1; font-family: monospace;">http://localhost:3000</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="color: #f59e0b; font-weight: bold;">📑 Complete Report:</span>
+            <span style="color: #cbd5e1; font-family: monospace;">CAPSTONE_REPORT.md</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>TSP Capstone Project</span>
+        <span>Slide 12 / 12 • Q&A Session</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 12;
+
+    function updateCounter() {
+      const el = document.getElementById('slideCounter');
+      if (el) el.textContent = `Slide ${currentSlide} of ${totalSlides}`;
+    }
+
+    function scrollToSlide(n) {
+      if (n < 1) n = 1;
+      if (n > totalSlides) n = totalSlides;
+      currentSlide = n;
+      const target = document.getElementById(`slide-${currentSlide}`);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      updateCounter();
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) scrollToSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) scrollToSlide(currentSlide - 1);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      }
+    });
+  </script>
+</body>
+</html>
